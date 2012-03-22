@@ -1,0 +1,60 @@
+From 2d2664a801ac6ccc5fae7cede637d7c251497547 Mon Sep 17 00:00:00 2001
+From: Arun Sharma <asharma@fb.com>
+Date: Wed, 22 Feb 2012 22:51:14 -0800
+Subject: [PATCH 1/2] Implement a no cookies option
+
+---
+ chrome/browser/autocomplete/search_provider.cc |    8 +++++++-
+ chrome/browser/autocomplete/search_provider.h  |    3 +++
+ 2 files changed, 10 insertions(+), 1 deletions(-)
+
+diff --git a/chrome/browser/autocomplete/search_provider.cc b/chrome/browser/autocomplete/search_provider.cc
+index 62d5b92..dee5c88 100644
+--- a/chrome/browser/autocomplete/search_provider.cc
++++ b/chrome/browser/autocomplete/search_provider.cc
+@@ -32,6 +32,7 @@
+ #include "googleurl/src/url_util.h"
+ #include "grit/generated_resources.h"
+ #include "net/base/escape.h"
++#include "net/base/load_flags.h"
+ #include "net/http/http_response_headers.h"
+ #include "net/url_request/url_request_status.h"
+ #include "ui/base/l10n/l10n_util.h"
+@@ -83,7 +84,8 @@ SearchProvider::SearchProvider(ACProviderListener* listener, Profile* profile)
+     : AutocompleteProvider(listener, profile, "Search"),
+       suggest_results_pending_(0),
+       have_suggest_results_(false),
+-      instant_finalized_(false) {
++      instant_finalized_(false),
++      no_cookies_(true) {
+ }
+ 
+ void SearchProvider::FinalizeInstantQuery(const string16& input_text,
+@@ -446,6 +448,10 @@ content::URLFetcher* SearchProvider::CreateSuggestFetcher(
+       content::URLFetcher::GET,
+       this);
+   fetcher->SetRequestContext(profile_->GetRequestContext());
++  if (no_cookies_) {
++      fetcher->SetLoadFlags(net::LOAD_DO_NOT_SEND_COOKIES
++                            | net::LOAD_DO_NOT_SAVE_COOKIES);
++  }
+   fetcher->Start();
+   return fetcher;
+ }
+diff --git a/chrome/browser/autocomplete/search_provider.h b/chrome/browser/autocomplete/search_provider.h
+index cf410f5..a6048ba 100644
+--- a/chrome/browser/autocomplete/search_provider.h
++++ b/chrome/browser/autocomplete/search_provider.h
+@@ -329,6 +329,9 @@ class SearchProvider : public AutocompleteProvider,
+   // The |suggest_text| parameter passed to FinalizeInstantQuery.
+   string16 default_provider_suggest_text_;
+ 
++  // Search engine configured without cookies?
++  bool no_cookies_;
++
+   DISALLOW_COPY_AND_ASSIGN(SearchProvider);
+ };
+ 
+-- 
+1.7.5.4
+

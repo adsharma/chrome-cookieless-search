@@ -1,0 +1,92 @@
+diff --git a/src/gurl.cc b/src/gurl.cc
+index 9a2f57e..4337517 100644
+--- a/src/gurl.cc
++++ b/src/gurl.cc
+@@ -105,19 +105,20 @@ const std::string& EmptyStringForGURL() {
+ 
+ } // namespace
+ 
+-GURL::GURL() : is_valid_(false), inner_url_(NULL) {
++GURL::GURL() : is_valid_(false), inner_url_(NULL), search_url_(false)  {
+ }
+ 
+ GURL::GURL(const GURL& other)
+     : spec_(other.spec_),
+       is_valid_(other.is_valid_),
+       parsed_(other.parsed_),
+-      inner_url_(NULL) {
++      inner_url_(NULL),
++      search_url_(other.search_url_) {
+   if (other.inner_url_)
+     inner_url_ = new GURL(*other.inner_url_);
+ }
+ 
+-GURL::GURL(const std::string& url_string) : inner_url_(NULL) {
++GURL::GURL(const std::string& url_string) : inner_url_(NULL), search_url_(false) {
+   is_valid_ = InitCanonical(url_string, &spec_, &parsed_);
+ #ifdef FULL_FILESYSTEM_URL_SUPPORT
+   if (is_valid_ && SchemeIsFileSystem()) {
+@@ -127,7 +128,7 @@ GURL::GURL(const std::string& url_string) : inner_url_(NULL) {
+ #endif
+ }
+ 
+-GURL::GURL(const string16& url_string) : inner_url_(NULL) {
++GURL::GURL(const string16& url_string) : inner_url_(NULL), search_url_(false) {
+   is_valid_ = InitCanonical(url_string, &spec_, &parsed_);
+ #ifdef FULL_FILESYSTEM_URL_SUPPORT
+   if (is_valid_ && SchemeIsFileSystem()) {
+@@ -142,7 +143,8 @@ GURL::GURL(const char* canonical_spec, size_t canonical_spec_len,
+     : spec_(canonical_spec, canonical_spec_len),
+       is_valid_(is_valid),
+       parsed_(parsed),
+-      inner_url_(NULL) {
++      inner_url_(NULL),
++      search_url_(false) {
+ #ifdef FULL_FILESYSTEM_URL_SUPPORT
+   if (is_valid_ && SchemeIsFileSystem()) {
+     inner_url_ =
+@@ -184,6 +186,7 @@ GURL& GURL::operator=(const GURL& other) {
+   spec_ = other.spec_;
+   is_valid_ = other.is_valid_;
+   parsed_ = other.parsed_;
++  search_url_ = other.search_url_;
+   delete inner_url_;
+   inner_url_ = NULL;
+   if (other.inner_url_)
+@@ -499,6 +502,7 @@ bool GURL::DomainIs(const char* lower_ascii_domain,
+ void GURL::Swap(GURL* other) {
+   spec_.swap(other->spec_);
+   std::swap(is_valid_, other->is_valid_);
++  std::swap(search_url_, other->search_url_);
+   std::swap(parsed_, other->parsed_);
+   std::swap(inner_url_, other->inner_url_);
+ }
+diff --git a/src/gurl.h b/src/gurl.h
+index 8e226d8..d0c301b 100644
+--- a/src/gurl.h
++++ b/src/gurl.h
+@@ -359,6 +359,14 @@ class GURL {
+     return inner_url_;
+   }
+ 
++  bool IsSearchURL() const {
++      return search_url_;
++  }
++
++  void SetSearchURL() {
++      search_url_ = true;
++  }
++
+  private:
+   // Returns the substring of the input identified by the given component.
+   std::string ComponentString(const url_parse::Component& comp) const {
+@@ -381,6 +389,9 @@ class GURL {
+   // Used for nested schemes [currently only filesystem:].
+   GURL* inner_url_;
+ 
++  // Was the URL constructed by a configured search engine?
++  bool search_url_;
++
+   // TODO bug 684583: Add encoding for query params.
+ };
+ 

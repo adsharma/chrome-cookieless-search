@@ -1,0 +1,5 @@
+These patches allow you to disable cookies on search queries entered
+into the omnibox.
+
+Tested against commit id c9bbde789341af5966541d5535b3fbc0ed193951 in
+the chrome repo.

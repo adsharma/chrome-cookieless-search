@@ -1,0 +1,83 @@
+diff --git a/Source/WebCore/platform/network/chromium/ResourceRequest.h b/Source/WebCore/platform/network/chromium/ResourceRequest.h
+index fce1ebf..160d07b 100644
+--- a/Source/WebCore/platform/network/chromium/ResourceRequest.h
++++ b/Source/WebCore/platform/network/chromium/ResourceRequest.h
+@@ -71,6 +71,7 @@ namespace WebCore {
+             , m_requestorProcessID(0)
+             , m_appCacheHostID(0)
+             , m_hasUserGesture(false)
++            , m_isSearchURL(false)
+             , m_downloadToFile(false)
+             , m_targetType(TargetIsUnspecified)
+         {
+@@ -82,6 +83,7 @@ namespace WebCore {
+             , m_requestorProcessID(0)
+             , m_appCacheHostID(0)
+             , m_hasUserGesture(false)
++            , m_isSearchURL(false)
+             , m_downloadToFile(false)
+             , m_targetType(TargetIsUnspecified)
+         {
+@@ -93,6 +95,7 @@ namespace WebCore {
+             , m_requestorProcessID(0)
+             , m_appCacheHostID(0)
+             , m_hasUserGesture(false)
++            , m_isSearchURL(false)
+             , m_downloadToFile(false)
+             , m_targetType(TargetIsUnspecified)
+         {
+@@ -129,6 +132,10 @@ namespace WebCore {
+         bool hasUserGesture() const { return m_hasUserGesture; }
+         void setHasUserGesture(bool hasUserGesture) { m_hasUserGesture = hasUserGesture; }
+ 
++        // True if request was search related
++        bool isSearchURL() const { return m_isSearchURL; }
++        void setSearchURL(bool val) { m_isSearchURL= val; }
++
+         // True if request should be downloaded to file.
+         bool downloadToFile() const { return m_downloadToFile; }
+         void setDownloadToFile(bool downloadToFile) { m_downloadToFile = downloadToFile; }
+@@ -154,6 +161,7 @@ namespace WebCore {
+         int m_requestorProcessID;
+         int m_appCacheHostID;
+         bool m_hasUserGesture;
++        bool m_isSearchURL;
+         bool m_downloadToFile;
+         RefPtr<ExtraData> m_extraData;
+         TargetType m_targetType;
+diff --git a/Source/WebKit/chromium/public/platform/WebURLRequest.h b/Source/WebKit/chromium/public/platform/WebURLRequest.h
+index adf2f2e..a1556d4 100644
+--- a/Source/WebKit/chromium/public/platform/WebURLRequest.h
++++ b/Source/WebKit/chromium/public/platform/WebURLRequest.h
+@@ -154,6 +154,10 @@ public:
+     WEBKIT_EXPORT bool hasUserGesture() const;
+     WEBKIT_EXPORT void setHasUserGesture(bool);
+ 
++    // True if the request was search related
++    WEBKIT_EXPORT bool isSearchURL() const;
++    WEBKIT_EXPORT void setSearchURL(bool);
++
+     // A consumer controlled value intended to be used to identify the
+     // requestor.
+     WEBKIT_EXPORT int requestorID() const;
+diff --git a/Source/WebKit/chromium/src/WebURLRequest.cpp b/Source/WebKit/chromium/src/WebURLRequest.cpp
+index cbac824..d04bfda 100644
+--- a/Source/WebKit/chromium/src/WebURLRequest.cpp
++++ b/Source/WebKit/chromium/src/WebURLRequest.cpp
+@@ -258,6 +258,16 @@ void WebURLRequest::setHasUserGesture(bool hasUserGesture)
+     m_private->m_resourceRequest->setHasUserGesture(hasUserGesture);
+ }
+ 
++bool WebURLRequest::isSearchURL() const
++{
++    return m_private->m_resourceRequest->isSearchURL();
++}
++
++void WebURLRequest::setSearchURL(bool val)
++{
++    m_private->m_resourceRequest->setSearchURL(val);
++}
++
+ void WebURLRequest::setTargetType(TargetType targetType)
+ {
+     m_private->m_resourceRequest->setTargetType(
